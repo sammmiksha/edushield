@@ -1,0 +1,20 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node / React
+node_modules/
+
+# Large binaries
+*.exe
+*.dll
+*.lib
+
+# Env & secrets
+.env
+
+# App runtime folders
+uploads/
+temp/
+reports/
