@@ -3,11 +3,10 @@ import FileUpload from "../components/FileUpload";
 import Avatar from "../components/Avatar";
 import "../button.css";
 import axios from "axios";
-import { ToastContainer } from "react-toastify";
 
 const UploadPage = ({ onUploadSuccess }) => {
   const [user, setUser] = useState(null);
-  const [domain, setDomain] = useState("general"); // ✅ default
+  const [domain, setDomain] = useState("general");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -22,28 +21,50 @@ const UploadPage = ({ onUploadSuccess }) => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 py-10 px-4">
-      <div className="w-full max-w-3xl p-10 rounded-2xl bg-white shadow-xl">
+    <div className="
+      flex flex-col items-center justify-center
+      min-h-screen py-10 px-4
+      transition-colors duration-300
+    ">
+
+      <div className="
+        w-full max-w-3xl p-10 rounded-2xl shadow-xl
+        bg-white dark:bg-slate-800
+        border border-gray-200 dark:border-slate-700
+        text-gray-900 dark:text-gray-100
+      ">
+
+        {/* USER HEADER */}
         {user && (
-          <div className="flex items-center gap-4 mb-6">
-            <Avatar name={user.email} />
-            <span className="text-lg font-medium">{user.email}</span>
+          <div className="flex items-center gap-4 mb-8">
+            <Avatar user={user} />
+            <span className="text-lg font-medium">
+              {user.email}
+            </span>
           </div>
         )}
 
-        <h2 className="mb-6 text-2xl font-bold text-gray-800">
+        {/* TITLE */}
+        <h2 className="mb-6 text-2xl font-bold">
           Upload Assignment
         </h2>
 
-        {/* 🔹 DOMAIN SELECTOR */}
+        {/* DOMAIN SELECTOR */}
         <div className="mb-6">
-          <label className="block mb-2 font-medium text-gray-700">
+          <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300">
             Select Domain
           </label>
+
           <select
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2"
+            className="
+              w-full rounded-lg px-4 py-2
+              border border-gray-300 dark:border-slate-600
+              bg-white dark:bg-slate-900
+              text-gray-900 dark:text-white
+              focus:outline-none focus:ring-2 focus:ring-indigo-500
+            "
           >
             <option value="cs">Computer Science</option>
             <option value="science">Science</option>
@@ -52,13 +73,13 @@ const UploadPage = ({ onUploadSuccess }) => {
           </select>
         </div>
 
+        {/* FILE UPLOAD COMPONENT */}
         <FileUpload
-          domain={domain}                // ✅ PASS DOMAIN
+          domain={domain}
           onUploadSuccess={onUploadSuccess}
         />
-      </div>
 
-      <ToastContainer position="top-right" autoClose={3000} />
+      </div>
     </div>
   );
 };

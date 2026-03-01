@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 .App {
   text-align: center;
 }
@@ -91,4 +92,18 @@ tr:hover {
   .button {
     width: 100%;
   }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: rotateY(90deg) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: rotateY(0deg) scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease forwards;
 }

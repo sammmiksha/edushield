@@ -98,9 +98,11 @@ class Submission(Base):
 
     remark_text = Column(String(255))
     needs_resubmission = Column(Boolean, default=False)
+    review_status = Column(String, default="pending")   # pending | reviewed | resubmission_required
+    reviewed_at = Column(DateTime, nullable=True)
     text_content = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
-
+    
     assignment = relationship("Assignment", back_populates="submissions")
     student = relationship("Users", back_populates="submissions")
 
@@ -117,6 +119,8 @@ class AssignmentResult(Base):
     plagiarism_explanation = Column(String, nullable=True)
 
     matched_phrases = Column(JSON, nullable=True)
+    source_mapping = Column(JSON, nullable=True)
+    sentence_analysis = Column(JSON, nullable=True)
 
     ai_label = Column(String, nullable=False)
     ai_confidence = Column(Float, nullable=False)

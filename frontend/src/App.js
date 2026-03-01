@@ -6,16 +6,14 @@ import {
   Route,
   useNavigate,
 } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster, toast } from "sonner";
 
+import Sidebar from "./components/Sidebar";
 import AuthForm from "./AuthForm";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import AppRoutes from "./AppRoutes";
+import { ThemeProvider } from "./context/ThemeContext";
 
-/* ----------------------------------------
-   INNER APP (has access to useNavigate)
----------------------------------------- */
 function AppContent() {
   const navigate = useNavigate();
 
@@ -24,7 +22,7 @@ function AppContent() {
   const [authLoading, setAuthLoading] = useState(true);
   const [mode, setMode] = useState("login");
 
-  /* Restore session */
+ 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
 
@@ -49,37 +47,44 @@ function AppContent() {
       .finally(() => setAuthLoading(false));
   }, []);
 
-  /* Login success */
+ 
   const handleAuthSuccess = async (newToken) => {
-    localStorage.setItem("token", newToken);
-    setToken(newToken);
+  localStorage.setItem("token", newToken);
+  setToken(newToken);
 
-    try {
-      const res = await fetch("http://127.0.0.1:8000/me", {
-        headers: { Authorization: `Bearer ${newToken}` },
-      });
+  try {
+    const res = await fetch("http://127.0.0.1:8000/me", {
+      headers: { Authorization: `Bearer ${newToken}` },
+    });
 
-      if (!res.ok) throw new Error();
+    if (!res.ok) throw new Error();
 
-      const data = await res.json();
-      setUser(data);
-      toast.success("Login successful!");
-    } catch {
-      toast.error("Authentication failed");
-      localStorage.removeItem("token");
-      setToken(null);
-      setUser(null);
+    const data = await res.json();
+    setUser(data);
+
+    toast.success("Login successful!");
+
+    if (data.role === "student") {
+      navigate("/student-dashboard", { replace: true });
+    } else if (data.role === "faculty") {
+      navigate("/faculty-dashboard", { replace: true });
+    } else {
+      navigate("/upload", { replace: true });
     }
-  };
-
-  /* 🔥 FIXED LOGOUT */
+  } catch {
+    toast.error("Authentication failed");
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  }
+};
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
     setUser(null);
     toast.info("Logged out");
 
-    navigate("/", { replace: true }); // ✅ FORCE REDIRECT
+    navigate("/", { replace: true }); 
   };
 
   if (authLoading) {
@@ -97,58 +102,103 @@ function AppContent() {
           <Route
             path="/"
             element={
-              <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-tr from-blue-300 via-white to-cyan-300 p-6">
-                <h1 className="text-3xl font-bold text-gray-800 mb-6">
-                  EduShield Authentication
-                </h1>
+<div className="min-h-screen bg-gradient-to-br from-indigo-200 via-white to-cyan-200 p-6">
 
-                <div className="flex gap-4 mb-6">
-                  <button
-                    onClick={() => setMode("login")}
-                    className={`px-6 py-2 rounded-md text-white ${
-                      mode === "login"
-                        ? "bg-blue-600"
-                        : "bg-blue-500 hover:bg-blue-600"
-                    }`}
-                  >
-                    Login
-                  </button>
+  {/* Header section */}
+  <div className="flex flex-col items-center">
+   <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-6 drop-shadow-sm">
+      EduShield Authentication
+    </h1>
+{/* 🚀 PRO Auth Toggle */}
+<div className="relative flex bg-white/60 backdrop-blur-xl p-1.5 rounded-2xl shadow-lg mb-12">
 
-                  <button
-                    onClick={() => setMode("signup")}
-                    className={`px-6 py-2 rounded-md text-white ${
-                      mode === "signup"
-                        ? "bg-cyan-600"
-                        : "bg-cyan-500 hover:bg-cyan-600"
-                    }`}
-                  >
-                    Signup
-                  </button>
-                </div>
+  {/* Sliding highlight */}
+  <div
+    className={`
+      absolute top-1.5 bottom-1.5 w-[48%] rounded-xl
+      bg-gradient-to-r from-indigo-600 to-cyan-500
+      shadow-md
+      transition-all duration-300 ease-in-out
+      ${mode === "signup" ? "translate-x-full" : "translate-x-0"}
+    `}
+  />
 
-                <AuthForm mode={mode} onSuccess={handleAuthSuccess} />
-              </div>
+  {/* Login */}
+  <button
+    onClick={() => setMode("login")}
+    className={`
+      relative z-10 flex-1 px-10 py-2.5 rounded-xl
+      font-semibold tracking-wide
+      transition-all duration-200
+      ${
+        mode === "login"
+          ? "text-white"
+          : "text-gray-700 hover:text-gray-900 hover:scale-[1.03]"
+      }
+    `}
+  >
+    Login
+  </button>
+
+  {/* Signup */}
+  <button
+    onClick={() => setMode("signup")}
+    className={`
+      relative z-10 flex-1 px-10 py-2.5 rounded-xl
+      font-semibold tracking-wide
+      transition-all duration-200
+      ${
+        mode === "signup"
+          ? "text-white"
+          : "text-gray-700 hover:text-gray-900 hover:scale-[1.03]"
+      }
+    `}
+  >
+    Signup
+  </button>
+</div>
+  </div>
+
+  {/* ⭐ REAL CENTER AREA */}
+  <div className="flex items-start justify-center pt-10 min-h-[60vh]">
+    <div className="perspective w-full max-w-md">
+      <div className={`flip-card-inner ${mode === "signup" ? "flipped" : ""}`}>
+        <div className="flip-card-front">
+          <AuthForm mode="login" onSuccess={handleAuthSuccess} />
+        </div>
+
+        <div className="flip-card-back">
+          <AuthForm mode="signup" onSuccess={handleAuthSuccess} />
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
             }
           />
 
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         </Routes>
       ) : (
-        <AppRoutes user={user} onLogout={handleLogout} />
-      )}
-
-      <ToastContainer position="top-right" autoClose={3000} />
+      <AppRoutes user={user} onLogout={handleLogout} />
+)}
     </>
   );
 }
 
-/* ----------------------------------------
-   OUTER ROUTER
----------------------------------------- */
+
 export default function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <ThemeProvider>
+      <Router>
+                {/* 🔥 GLOBAL TOAST — NEVER UNMOUNT */}
+        <Toaster position="top-right" richColors />
+
+        <AppContent />
+      </Router>
+    </ThemeProvider>
   );
 }
+
+

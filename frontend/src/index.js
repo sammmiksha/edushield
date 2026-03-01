@@ -4,11 +4,13 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import './index.css';   // Tailwind directives live here
 import './button.css';  // your gradient‑button styles
+import { ThemeProvider } from './context/ThemeContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider> <App /></ThemeProvider>
+    
   </React.StrictMode>
 );
 

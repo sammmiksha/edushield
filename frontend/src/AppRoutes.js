@@ -1,6 +1,5 @@
-// AppRoutes.js
 import React, { useState } from "react";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import UploadPage from "./pages/UploadPage";
 import ResultsPage from "./pages/ResultsPage";
@@ -13,8 +12,11 @@ import StudentAssignmentPage from "./pages/StudentAssignmentPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentSectionPage from "./pages/StudentSectionPage";
 import JoinSectionPage from "./pages/JoinSectionPage";
-
+import FacultyDashboard from "./pages/FacultyDashboard";
+import AppLayout from "./components/AppLayout";
+import Profile from "./components/Profile";
 function AppRoutes({ user, onLogout }) {
+
   const [results, setResults] = useState([]);
 
   const fetchResults = () => {
@@ -24,73 +26,60 @@ function AppRoutes({ user, onLogout }) {
     fetch("http://127.0.0.1:8000/results", {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.ok ? res.json() : Promise.reject())
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => setResults(data))
-      .catch((err) => console.error("Error fetching results:", err));
+      .catch((err) => console.error(err));
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* ---------------- NAVBAR ---------------- */}
-      <nav className="flex flex-wrap items-center justify-between bg-blue-600 text-white px-6 py-3 shadow-lg">
-        <h2 className="text-xl font-semibold">EduShield</h2>
+    <Routes>
+      <Route element={<AppLayout user={user} onLogout={onLogout} />}>
 
-        <div className="flex gap-3 flex-wrap mt-2 sm:mt-0">
-          {user.role === "student" && (
-            <>
-              <Link to="/upload" className="btn-gradient">Upload</Link>
-              <Link to="/results" className="btn-gradient">Results</Link>
-              <Link to="/student/assignments" className="btn-gradient">Assignments</Link>
-              <Link to="/join-section" className="btn-gradient">Join Section</Link>
-            </>
-          )}
+        {/* DASHBOARD */}
+        <Route
+          path="/dashboard"
+          element={
+            user.role === "faculty"
+              ? <FacultyDashboard />
+              : <StudentDashboard />
+          }
+        />
 
-          {user.role === "faculty" && (
-            <>
-              <Link to="/upload" className="btn-gradient">Upload</Link>
-              <Link to="/results" className="btn-gradient">Results</Link>
-              <Link to="/create-section" className="btn-gradient">Create Section</Link>
-              <Link to="/submissions" className="btn-gradient">Submissions</Link>
-            </>
-          )}
+        <Route
+          path="/upload"
+          element={<UploadPage onUploadSuccess={fetchResults} />}
+        />
 
-          <button
-            onClick={onLogout}
-            className="btn-gradient bg-red-500 hover:bg-red-600"
-          >
-            Log Out
-          </button>
-        </div>
-      </nav>
-
-      {/* ---------------- ROUTES ---------------- */}
-      <Routes>
-        <Route path="/upload" element={<UploadPage onUploadSuccess={fetchResults} />} />
         <Route path="/results" element={<ResultsPage results={results} />} />
+        <Route path="/check" element={<CheckDocumentPage />} />
+        <Route path="/profile" element={<Profile />} />
+        {/* STUDENT */}
+        {user.role === "student" && (
+          <>
+            <Route path="/student/assignments" element={<StudentAssignmentPage />} />
+            <Route path="/student/section/:id" element={<StudentSectionPage />} />
+            <Route path="/join-section" element={<JoinSectionPage />} />
+          </>
+        )}
 
+        {/* FACULTY */}
         {user.role === "faculty" && (
           <>
             <Route path="/submissions" element={<ViewSubmissions />} />
             <Route path="/create-section" element={<CreateSectionPage />} />
           </>
         )}
-
-        {user.role === "student" && (
-          <>
-            <Route path="/student/assignments" element={<StudentAssignmentPage />} />
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/student/section/:id" element={<StudentSectionPage />} />
-            <Route path="/join-section" element={<JoinSectionPage />} />
-          </>
-        )}
-
-        <Route path="/check" element={<CheckDocumentPage />} />
+        
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<PasswordReset />} />
 
-        <Route path="*" element={<UploadPage onUploadSuccess={fetchResults} />} />
-      </Routes>
-    </div>
+        <Route
+          path="*"
+          element={<UploadPage onUploadSuccess={fetchResults} />}
+        />
+
+      </Route>
+    </Routes>
   );
 }
 

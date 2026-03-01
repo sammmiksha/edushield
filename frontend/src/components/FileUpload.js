@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
+import Button from "../components/ui/Button";
 
 function FileUpload({ domain, onUploadSuccess }) {
   const [file, setFile] = useState(null);
@@ -11,29 +12,29 @@ function FileUpload({ domain, onUploadSuccess }) {
 
   const handleUpload = async () => {
     if (!file) {
-      toast.error("Please select a file to upload.");
+      toast.error("Please select a file.");
       return;
     }
 
     if (!domain) {
-      toast.error("Please select a domain before uploading.");
+      toast.error("Select a domain first.");
       return;
     }
 
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("You are not logged in. Please log in first.");
+      toast.error("Not authenticated.");
       return;
     }
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("domain", domain); // ✅ FIXED
+    formData.append("domain", domain);
 
     setUploading(true);
 
     try {
-      const response = await fetch(
+      const res = await fetch(
         "http://127.0.0.1:8000/check-personal-document/",
         {
           method: "POST",
@@ -44,46 +45,67 @@ function FileUpload({ domain, onUploadSuccess }) {
         }
       );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Upload failed:", errorText);
-        toast.error(`Upload failed: ${response.status}`);
+      if (!res.ok) {
+        toast.error(`Upload failed (${res.status})`);
         return;
       }
 
-      const result = await response.json();
-      toast.success("File uploaded successfully!");
-      setFile(null);
+      const result = await res.json();
 
-      if (onUploadSuccess) {
-        onUploadSuccess(result);
-      }
+      toast.success("Upload complete");
+
+      setFile(null);
+      onUploadSuccess?.(result);
+
     } catch (err) {
-      console.error("Unexpected error:", err);
-      toast.error("An unexpected error occurred during upload.");
+      console.error(err);
+      toast.error("Unexpected upload error.");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="mb-6 w-full">
+    <div
+      className="
+        w-full
+        p-6
+        rounded-2xl
+        bg-white dark:bg-slate-800
+        border border-gray-200 dark:border-slate-700
+        shadow-sm hover:shadow-lg
+        transition-all
+      "
+    >
       <div className="flex flex-col sm:flex-row items-center gap-4">
+
+        {/* FILE INPUT */}
         <input
           type="file"
           onChange={handleFileChange}
-          className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="
+            w-full
+            text-sm
+            text-gray-900 dark:text-gray-200
+            file:mr-4 file:px-4 file:py-2
+            file:rounded-lg
+            file:border-0
+            file:bg-indigo-50 dark:file:bg-slate-700
+            file:text-indigo-600 dark:file:text-cyan-400
+            hover:file:bg-indigo-100
+            transition-all
+          "
         />
 
-        <button
+        {/* BUTTON */}
+        <Button
           onClick={handleUpload}
           disabled={uploading}
-          className={`px-5 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-md font-semibold shadow hover:scale-105 transition-transform duration-300 ${
-            uploading ? "opacity-60 cursor-not-allowed" : ""
-          }`}
+          variant="primary"
         >
-          {uploading ? "Uploading..." : "Upload"}
-        </button>
+          {uploading ? "Uploading…" : "Upload"}
+        </Button>
+
       </div>
     </div>
   );

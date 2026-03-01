@@ -16,3 +16,56 @@
 .btn-gradient:hover {
   @apply -translate-y-0.5 shadow-lg;
 }
+/* ===== 3D Flip Card ===== */
+
+.perspective {
+  perspective: 1200px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  transition: transform 0.6s ease-in-out;
+  transform-style: preserve-3d;
+}
+
+.flip-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  backface-visibility: hidden;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+@keyframes floatCard {
+  0%,100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.25s ease-out;
+}
+.card-ui {
+  @apply bg-white dark:bg-[#0f172a] dark:text-white rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 transition;
+}
+.input-ui {
+  @apply w-full px-3 py-2 border rounded-md 
+  bg-white dark:bg-[#020617]
+  border-gray-300 dark:border-gray-700
+  text-gray-900 dark:text-gray-100
+  focus:ring-indigo-400;
+}

@@ -1,13 +1,15 @@
-// src/components/SubmissionsList.js
 import React, { useState } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 const SubmissionsList = ({ submissions }) => {
   const token = localStorage.getItem("token");
+
+  const [expandedId, setExpandedId] = useState(null);
   const [remarks, setRemarks] = useState({});
   const [needsResub, setNeedsResub] = useState({});
   const [submitting, setSubmitting] = useState({});
+  const [reviewState, setReviewState] = useState({});
 
   const formatAiLabel = (label) => {
     if (!label) return "N/A";
@@ -16,8 +18,20 @@ const SubmissionsList = ({ submissions }) => {
     return label;
   };
 
+  const reviewBadge = (status) => {
+    switch (status) {
+      case "reviewed":
+        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300";
+      case "resubmission_required":
+        return "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300";
+      default:
+        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-300";
+    }
+  };
+
   const submitRemark = async (submissionId) => {
     const remark = remarks[submissionId];
+
     if (!remark || remark.trim().length === 0) {
       toast.error("Remark cannot be empty");
       return;
@@ -36,81 +50,149 @@ const SubmissionsList = ({ submissions }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      toast.success("Remark submitted successfully");
-    } catch (err) {
-      toast.error("Failed to submit remark");
+      toast.success("Review submitted");
+
+      // Instantly update UI
+      setReviewState((prev) => ({
+        ...prev,
+        [submissionId]: needsResub[submissionId]
+          ? "resubmission_required"
+          : "reviewed",
+      }));
+
+    } catch {
+      toast.error("Failed to submit review");
     } finally {
       setSubmitting((s) => ({ ...s, [submissionId]: false }));
     }
   };
 
   return (
-    <div className="space-y-6">
-      {submissions.map((s) => (
-        <div key={s.submission_id} className="bg-white p-6 rounded shadow w-full">
-          {/* Header */}
-          <div className="mb-3">
-            <p className="font-semibold">Student: {s.student_name || "Student"}</p>
-            <p className="text-sm text-gray-600">File: {s.filename}</p>
-            <p className="text-sm">Similarity: {s.similarity || "0%"}</p>
-            <p className="text-sm">
-              AI Result: <strong>{formatAiLabel(s.ai_label)}</strong>{" "}
-              ({s.ai_confidence})
-            </p>
-            <p className="text-sm text-gray-500">
-              Submitted: {new Date(s.created_at).toLocaleString()}
-            </p>
-          </div>
+    <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0f172a]">
 
-          {/* PDF Preview */}
-          {s.file_url && (
-            <iframe
-              src={s.file_url}
-              title="Submission Preview"
-              className="w-full h-[500px] border rounded mb-4 bg-gray-100"
-              
-            />
-          )}
+      <table className="w-full text-sm">
+        <thead className="bg-indigo-600 text-white">
+          <tr>
+            <th className="px-4 py-3 text-left">Student</th>
+            <th className="px-4 py-3 text-left">Document</th>
+            <th className="px-4 py-3 text-left">Plagiarism</th>
+            <th className="px-4 py-3 text-left">AI</th>
+            <th className="px-4 py-3 text-left">Status</th>
+            <th className="px-4 py-3 text-left">Action</th>
+          </tr>
+        </thead>
 
-          {/* Remark Box */}
-          <textarea
-            placeholder="Write remark for student (visible after review)"
-            value={remarks[s.submission_id] || ""}
-            onChange={(e) =>
-              setRemarks((r) => ({
-                ...r,
-                [s.submission_id]: e.target.value,
-              }))
-            }
-            className="w-full border rounded p-2 mb-2"
-            maxLength={100}
-          />
+        <tbody>
+          {submissions.map((s) => {
+            const status =
+              reviewState[s.submission_id] || s.review_status || "pending";
 
-          <div className="flex items-center gap-3 mb-3">
-            <input
-              type="checkbox"
-              checked={needsResub[s.submission_id] || false}
-              onChange={(e) =>
-                setNeedsResub((n) => ({
-                  ...n,
-                  [s.submission_id]: e.target.checked,
-                }))
-              }
-            />
-            <label className="text-sm text-gray-700">
-              Require resubmission
-            </label>
-          </div>
+            return (
+              <React.Fragment key={s.submission_id}>
+                <tr className="border-t hover:bg-indigo-50/60 dark:hover:bg-white/5 transition-all">
+                  <td className="px-4 py-3 font-semibold">
+                    {s.student_name}
+                  </td>
 
-          <button
-            onClick={() => submitRemark(s.submission_id)}
-            disabled={submitting[s.submission_id]}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {submitting[s.submission_id] ? "Saving..." : "Submit Review"}
-          </button>
-        </div>
-      ))}
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-1 rounded-lg text-xs bg-indigo-50 dark:bg-indigo-500/20">
+                      📄 {s.filename}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-3 font-semibold text-indigo-500">
+                    {s.similarity || "0%"}
+                  </td>
+
+                  <td className="px-4 py-3">
+                    {formatAiLabel(s.ai_label)} ({s.ai_confidence})
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${reviewBadge(
+                        status
+                      )}`}
+                    >
+                      {status.replace("_", " ")}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() =>
+                        setExpandedId(
+                          expandedId === s.submission_id
+                            ? null
+                            : s.submission_id
+                        )
+                      }
+                      className="px-3 py-1 text-xs rounded-lg bg-indigo-500 text-white hover:bg-indigo-600"
+                    >
+                      {expandedId === s.submission_id ? "Hide" : "View"}
+                    </button>
+                  </td>
+                </tr>
+
+                {expandedId === s.submission_id && (
+                  <tr className="bg-gray-50 dark:bg-slate-900/40">
+                    <td colSpan="6" className="p-6 space-y-4">
+
+                      {s.file_url && (
+                        <iframe
+                          src={s.file_url}
+                          title="Submission Preview"
+                          className="w-full h-[450px] rounded-xl border"
+                        />
+                      )}
+
+                      <textarea
+                        placeholder="Write remark for student"
+                        value={remarks[s.submission_id] || ""}
+                        onChange={(e) =>
+                          setRemarks((r) => ({
+                            ...r,
+                            [s.submission_id]: e.target.value,
+                          }))
+                        }
+                        className="w-full p-3 rounded-xl border dark:bg-[#020617]"
+                      />
+
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={needsResub[s.submission_id] || false}
+                          onChange={(e) =>
+                            setNeedsResub((n) => ({
+                              ...n,
+                              [s.submission_id]: e.target.checked,
+                            }))
+                          }
+                        />
+                        <span className="text-sm">
+                          Require resubmission
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => submitRemark(s.submission_id)}
+                        disabled={submitting[s.submission_id]}
+                        className="px-5 py-2 rounded-xl text-white bg-gradient-to-r from-indigo-500 to-cyan-500 hover:scale-[1.03]"
+                      >
+                        {submitting[s.submission_id]
+                          ? "Saving..."
+                          : "Submit Review"}
+                      </button>
+
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+
     </div>
   );
 };

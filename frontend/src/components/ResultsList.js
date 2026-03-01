@@ -1,10 +1,14 @@
-import React, { useMemo } from "react";
+import React, { useState, useMemo } from "react";
 
-/* convert UTC → IST */
-const toIST = (utcStr) => {
+/* ---------------- TIME FORMAT ---------------- */
+const formatDate = (utcStr) => {
   if (!utcStr) return "—";
+
   const utc = new Date(utcStr);
+  if (isNaN(utc.getTime())) return "—";
+
   const istMs = utc.getTime() + 5.5 * 60 * 60 * 1000;
+
   return (
     new Date(istMs).toLocaleString("en-IN", {
       day: "2-digit",
@@ -12,79 +16,86 @@ const toIST = (utcStr) => {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
       hour12: true,
     }) + " IST"
   );
 };
 
-/* severity badge styles */
-const severityStyle = (severity) => {
-  switch (severity) {
-    case "Low":
-      return "bg-green-100 text-green-800";
-    case "Medium":
-      return "bg-yellow-100 text-yellow-800";
-    case "High":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
+/* ---------------- SCORE BAR ---------------- */
+const ScoreBar = ({ value = 0 }) => {
+  const percent = Math.max(0, Math.min(100, value));
+
+  return (
+    <div className="w-full mt-1">
+      <div className="w-full h-2 rounded bg-gray-200 dark:bg-slate-700 overflow-hidden">
+        <div
+          className="h-2 bg-indigo-500 transition-all duration-500"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  );
 };
 
-/* highlight matched phrases */
-const highlightText = (text, phrases = []) => {
-  if (!text || phrases.length === 0) return text;
+/* ---------------- TEXT HIGHLIGHT ---------------- */
+const highlightText = (text, plag = [], ai = []) => {
+  if (!text) return text;
 
-  let highlighted = text;
-  phrases.forEach((phrase) => {
+  let output = text;
+
+  plag.forEach((phrase) => {
     const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`(${escaped})`, "gi");
-    highlighted = highlighted.replace(
+
+    output = output.replace(
       regex,
-      `<mark class="bg-yellow-300 px-1 rounded">$1</mark>`
+      `<mark class="bg-red-500/80 text-white px-1 rounded">$1</mark>`
     );
   });
 
-  return highlighted;
+  ai.forEach((phrase) => {
+    const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escaped})`, "gi");
+
+    output = output.replace(
+      regex,
+      `<mark class="bg-purple-500/80 text-white px-1 rounded">$1</mark>`
+    );
+  });
+
+  return output;
 };
 
-/* 🔐 Auth-safe PDF download */
-const downloadReport = async (resultId) => {
+/* ---------------- DOWNLOAD ---------------- */
+const downloadReport = async (id) => {
   const token = localStorage.getItem("token");
-  if (!token) {
-    alert("You are not logged in");
-    return;
-  }
 
-  const response = await fetch(
-    `http://127.0.0.1:8000/results/${resultId}/download`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+  const res = await fetch(
+    `http://127.0.0.1:8000/results/${id}/download`,
+    { headers: { Authorization: `Bearer ${token}` } }
   );
 
-  if (!response.ok) {
-    alert("Failed to download report");
+  if (!res.ok) {
+    alert("Download failed");
     return;
   }
 
-  const blob = await response.blob();
+  const blob = await res.blob();
   const url = window.URL.createObjectURL(blob);
 
   const a = document.createElement("a");
   a.href = url;
   a.download = "EduShield_Report.pdf";
-  document.body.appendChild(a);
   a.click();
 
-  a.remove();
   window.URL.revokeObjectURL(url);
 };
 
+/* ===================================================== */
+
 const ResultsList = ({ results = [] }) => {
+  const [expandedId, setExpandedId] = useState(null);
+
   const rows = useMemo(() => {
     return results.map((r, i) => {
       const isAI = r.ai_label?.toLowerCase().includes("ai");
@@ -93,23 +104,16 @@ const ResultsList = ({ results = [] }) => {
         id: r.id,
         key: `${r.filename}-${i}`,
         filename: r.filename,
-        similarityScore:
-          r.similarity_score !== null && r.similarity_score !== undefined
-            ? (r.similarity_score * 100).toFixed(2)
-            : null,
-        severity: r.plagiarism_severity || null,
-        preview: r.text_preview || null,
-        matchedPhrases: r.matched_phrases || [],
-        aiLabel: isAI ? "AI-generated" : "Human-written",
-        aiIcon: isAI ? "🤖" : "✅",
-        aiClass: isAI
-          ? "text-red-600 font-semibold"
-          : "text-green-600 font-semibold",
-        confidence:
-          r.ai_confidence !== undefined
-            ? `${(r.ai_confidence * 100).toFixed(2)}%`
-            : "—",
-        timestamp: toIST(r.timestamp),
+        similarity: (r.similarity_score * 100).toFixed(2),
+        similarityRaw: r.similarity_score * 100,
+        confidence: (r.ai_confidence * 100).toFixed(2),
+        confidenceRaw: r.ai_confidence * 100,
+        aiLabel: isAI ? "AI Generated" : "Human Written",
+        uploaded: formatDate(r.timestamp),
+        preview: r.text_preview,
+        matched: r.matched_phrases || [],
+        sourceMapping: r.source_mapping || [],
+        aiPhrases: r.ai_highlighted_phrases || [],
       };
     });
   }, [results]);
@@ -123,76 +127,139 @@ const ResultsList = ({ results = [] }) => {
   }
 
   return (
-    <div className="overflow-x-auto mt-4 rounded-lg shadow">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="bg-blue-600 text-white text-left">
-            <th className="px-4 py-3">Filename</th>
-            <th className="px-4 py-3">Plagiarism Analysis</th>
-            <th className="px-4 py-3">AI Result</th>
-            <th className="px-4 py-3">Confidence</th>
-            <th className="px-4 py-3">Uploaded At</th>
+    <div className="rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-[#0f172a] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-gray-100">
+      <table className="w-full text-sm">
+        <thead className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white">
+          <tr>
+            <th className="px-6 py-4 text-left">Filename</th>
+            <th className="px-6 py-4 text-left">Plagiarism</th>
+            <th className="px-6 py-4 text-left">AI Result</th>
+            <th className="px-6 py-4 text-left">Confidence</th>
+            <th className="px-6 py-4 text-left">Uploaded</th>
+            <th className="px-6 py-4 text-center">Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          {rows.map((r, idx) => (
-            <tr key={r.key} className={idx % 2 ? "bg-gray-50" : "bg-white"}>
-              <td className="px-4 py-3 border-b font-medium">
-                {r.filename}
-              </td>
+          {rows.map((r) => {
+            const isOpen = expandedId === r.id;
 
-              <td className="px-4 py-3 border-b">
-                <div className="font-semibold">
-                  {r.similarityScore !== null
-                    ? `${r.similarityScore}%`
-                    : "—"}
-                </div>
+            return (
+              <React.Fragment key={r.key}>
+                <tr className="border-t border-gray-200 dark:border-white/10 hover:bg-indigo-50/60 dark:hover:bg-indigo-500/10 transition">
+                  <td className="px-6 py-5 font-medium">{r.filename}</td>
 
-                {r.severity && (
-                  <span
-                    className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-semibold ${severityStyle(
-                      r.severity
-                    )}`}
-                  >
-                    {r.severity} Similarity
-                  </span>
+                  <td className="px-6 py-5">
+                    <div className="font-semibold">{r.similarity}%</div>
+                    <ScoreBar value={r.similarityRaw} />
+                  </td>
+
+                  <td className="px-6 py-5">
+                    <span
+                      className={`px-4 py-1.5 rounded-full text-xs font-semibold min-w-[110px] inline-flex justify-center ${
+                        r.aiLabel === "AI Generated"
+                          ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
+                          : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                      }`}
+                    >
+                      {r.aiLabel}
+                    </span>
+                  </td>
+
+                  <td className="px-6 py-5">
+                    <div className="font-semibold">{r.confidence}%</div>
+                    <ScoreBar value={r.confidenceRaw} />
+                  </td>
+
+                  <td className="px-6 py-5 text-gray-500 dark:text-gray-400">
+                    {r.uploaded}
+                  </td>
+
+                  <td className="px-6 py-5 text-center">
+                    <div className="flex justify-center gap-2">
+                      <button
+                        onClick={() =>
+                          setExpandedId(isOpen ? null : r.id)
+                        }
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 hover:scale-105 transition"
+                      >
+                        {isOpen ? "Hide" : "View"}
+                      </button>
+
+                      <button
+                        onClick={() => downloadReport(r.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 hover:scale-105 transition"
+                      >
+                        Download
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                {isOpen && (
+                  <tr>
+                    <td colSpan="6" className="p-8 bg-gray-50 dark:bg-[#111827] border-t border-gray-200 dark:border-white/10">
+                      
+                      {/* Preview */}
+                      <h4 className="font-semibold mb-4 text-indigo-600 dark:text-indigo-400">
+                        Document Analysis
+                      </h4>
+
+                      <div
+                        className="text-sm leading-relaxed p-5 rounded-xl bg-white dark:bg-[#1f2937] border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 max-h-72 overflow-y-auto"
+                        dangerouslySetInnerHTML={{
+                          __html: highlightText(
+                            r.preview,
+                            r.matched,
+                            r.aiPhrases
+                          ),
+                        }}
+                      />
+
+                      {/* Source Breakdown */}
+                      {r.sourceMapping.length > 0 && (
+                        <div className="mt-8">
+                          <h5 className="text-sm font-semibold text-red-500 mb-3">
+                            Plagiarism Sources
+                          </h5>
+
+                          {r.sourceMapping.map((src, i) => (
+                            <div
+                              key={i}
+                              className="p-4 mb-3 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-xs"
+                            >
+                              <p><strong>Matched Phrase:</strong> {src.phrase}</p>
+                              <p><strong>Source:</strong> {src.source}</p>
+                              <p><strong>Similarity:</strong> {(src.score * 100).toFixed(1)}%</p>
+                              {src.url && (
+                                <a
+                                  href={src.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-indigo-500 underline"
+                                >
+                                  View Source
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Clean result */}
+                      {r.sourceMapping.length === 0 &&
+                        r.matched.length === 0 &&
+                        r.aiPhrases.length === 0 && (
+                          <div className="mt-6 text-sm text-green-500">
+                            No significant plagiarism or AI-generated content detected.
+                          </div>
+                        )}
+                    </td>
+                  </tr>
                 )}
-
-                {r.preview && r.matchedPhrases.length > 0 && (
-                  <details className="mt-2">
-                    <summary className="cursor-pointer text-xs text-blue-600">
-                      View highlighted text
-                    </summary>
-
-                    <div
-                      className="mt-2 p-3 bg-gray-50 border rounded text-xs max-h-40 overflow-y-auto"
-                      dangerouslySetInnerHTML={{
-                        __html: highlightText(
-                          r.preview,
-                          r.matchedPhrases
-                        ),
-                      }}
-                    />
-                  </details>
-                )}
-
-                <button
-                  onClick={() => downloadReport(r.id)}
-                  className="inline-block mt-2 text-xs text-blue-700 underline"
-                >
-                  Download PDF Report
-                </button>
-              </td>
-
-              <td className={`px-4 py-3 border-b ${r.aiClass}`}>
-                {r.aiIcon} {r.aiLabel}
-              </td>
-
-              <td className="px-4 py-3 border-b">{r.confidence}</td>
-              <td className="px-4 py-3 border-b">{r.timestamp}</td>
-            </tr>
-          ))}
+              </React.Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>
