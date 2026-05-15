@@ -1,207 +1,222 @@
-EduShield – AI-Powered Plagiarism & Authorship Detection System
+<div align="center">
 
-EduShield is a full-stack web application designed to detect plagiarism and AI-generated content in academic documents.
-It supports both classroom-based evaluation (Faculty–Student workflow) and personal document checking, making it suitable for real-world academic use.
+# 🛡️ EduShield
+### AI-Powered Plagiarism & Authorship Detection System
 
-This project was developed as a BSc IT final-year project, focusing on practical application of Machine Learning, Web Development, and Cloud Integration.
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
+[![AWS S3](https://img.shields.io/badge/AWS_S3-FF9900?style=for-the-badge&logo=amazons3&logoColor=white)](https://aws.amazon.com/s3)
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co)
 
-🚀 Key Features
-🔐 Authentication & Roles
+*A full-stack academic integrity platform built as a BSc IT Final Year Project*
 
-Secure JWT-based authentication
+---
 
-Role-based access:
+</div>
 
-Faculty
+## 📖 Overview
 
-Student
+**EduShield** is a comprehensive academic integrity system that detects plagiarism and AI-generated content in student documents. It supports two distinct workflows — a **classroom-based Faculty–Student pipeline** for institutional use, and a **Personal Document Checker** for individual users — making it equally useful for educators and independent researchers.
 
-Personal User
+---
 
-👩‍🏫 Faculty Module
+## ✨ Features at a Glance
 
-Create sections (classrooms) with access codes
+| Feature | Student | Faculty | Personal User |
+|---|---|---|---|
+| Upload Documents | ✅ | ✅ | ✅ |
+| Plagiarism Detection | ✅ | ✅ | ✅ |
+| AI Content Detection | ✅ | ✅ | ✅ |
+| Downloadable PDF Report | — | — | ✅ |
+| View Assignment Feedback | ✅ | — | — |
+| Manage Sections | — | ✅ | — |
+| Review Submissions | — | ✅ | — |
 
-Upload reference assignments
+---
 
-View student submissions
+## 🚀 Key Modules
 
-Detect:
+### 🔐 Authentication & Role Management
+- Secure **JWT-based authentication**
+- Three distinct roles: **Faculty**, **Student**, **Personal User**
+- Role-based UI and API access control
 
-Student-to-reference plagiarism
+---
 
-Student-to-student plagiarism
+### 👩‍🏫 Faculty Module
+- Create **classroom sections** with unique access codes
+- Upload **reference assignments** per section
+- View and review all **student submissions**
+- Detect:
+  - Student-to-reference plagiarism
+  - Student-to-student cross-comparison
+- Add **remarks**, **grades**, and **resubmission requests**
 
-Add remarks, grades, and resubmission requests
+---
 
-👨‍🎓 Student Module
+### 👨‍🎓 Student Module
+- Join sections via **access code**
+- Upload assignments (.pdf / .docx)
+- View **plagiarism percentage** and **AI detection results**
+- Track **submission attempts**, **deadlines**, and **faculty feedback**
 
-Join sections using access code
+---
 
-Upload assignments
+### 📄 Personal Document Checker
+Upload any academic document and get a detailed integrity report:
 
-View plagiarism & AI results
+- **Domain-based analysis**: Computer Science · Science · Commerce · General
+- **Fingerprint-based plagiarism detection** against a public domain corpus
+- **AI content detection** using a transformer model
+- **Severity classification**: Low · Medium · High
+- **Highlighted matched phrases** in results
+- **Downloadable PDF report** — professional and shareable
 
-Track submission attempts and deadlines
+---
 
-Receive feedback from faculty
+## 🧠 Detection Methodology
 
-📄 Personal Document Checker (Real-World Mode)
+### ✔ Fingerprint-Based Plagiarism Detection
 
-Upload .pdf or .docx files
+```
+Text Normalization → Word Shingling → SHA-256 Hashing → Corpus Comparison → Similarity Score
+```
 
-Domain-based plagiarism analysis:
+1. Text is cleaned and broken into overlapping **word shingles**
+2. Each shingle is hashed using **SHA-256**
+3. Hashes are compared against a **domain-specific public corpus**
+4. Similarity is derived from the **fingerprint overlap ratio**
 
-Computer Science
+### 📊 Severity Thresholds
 
-Science
+| Similarity Score | Severity | Interpretation |
+|---|---|---|
+| ≤ 15% | 🟢 Low | Common academic phrasing |
+| 16–40% | 🟡 Medium | Partial content resemblance |
+| > 40% | 🔴 High | Strong overlap — likely plagiarism |
 
-Commerce
+---
 
-General
+### 🤖 AI Content Detection
 
-Fingerprint-based plagiarism detection
+- Model: [`roberta-base-openai-detector`](https://huggingface.co/roberta-base-openai-detector) (HuggingFace Transformers)
+- Output: **AI Generated** / **Human Written** + Confidence Score
+- Integrated directly into the results table for both personal and classroom uploads
 
-AI-generated content detection
+---
 
-Severity classification:
+### 📑 PDF Report Generation
 
-Low
+Auto-generated reports include:
+- Document filename & upload timestamp
+- Plagiarism percentage + severity badge
+- AI detection result + confidence score
+- Highlighted matched phrases
+- Downloadable directly from the Results page
 
-Medium
+---
 
-High
+## 🧰 Tech Stack
 
-Highlighted matched phrases
+### Frontend
+- **React.js** — Component-based SPA
+- **Tailwind CSS** — Utility-first styling
+- **Fetch API** — REST communication
+- **Toast Notifications** — User feedback
 
-Downloadable PDF plagiarism report
+### Backend
+- **FastAPI** — High-performance Python API
+- **SQLAlchemy** — ORM for database interaction
+- **PostgreSQL** — Relational data storage
+- **JWT** — Stateless authentication
 
-🧠 Plagiarism Detection Approach
-✔ Fingerprint-Based Method
+### AI / ML
+- **Scikit-learn** — TF-IDF & cosine similarity
+- **HuggingFace Transformers** — AI detection model
+- **SHA-256 Fingerprint Hashing** — Custom plagiarism engine
 
-Text is normalized and broken into word shingles
+### Cloud & Utilities
+- **AWS S3** — Secure file storage
+- **ReportLab** — PDF generation
 
-Each shingle is hashed (SHA-256)
+---
 
-User fingerprints are compared against a domain-specific public corpus
+## 📁 Project Structure
 
-Similarity is calculated using fingerprint overlap ratio
-
-✔ Severity Interpretation
-Similarity Score	Severity	Meaning
-≤ 15%	Low	Common academic phrases
-16–40%	Medium	Partial resemblance
-> 40%	High	Strong overlap
-🤖 AI Content Detection
-
-Uses a transformer-based model (roberta-base-openai-detector)
-
-Classifies content as:
-
-AI-generated
-
-Human-written
-
-Confidence score included in results
-
-📑 PDF Report Generation
-
-Automatically generates a professional plagiarism report
-
-Includes:
-
-Filename
-
-Similarity percentage
-
-Severity level
-
-AI detection result
-
-Highlighted matched phrases
-
-Downloadable directly from the UI
-
-🧰 Tech Stack
-Frontend
-
-React.js
-
-Tailwind CSS
-
-Fetch API
-
-Toast notifications
-
-Backend
-
-FastAPI
-
-SQLAlchemy
-
-PostgreSQL
-
-JWT Authentication
-
-AI / ML
-
-Scikit-learn (TF-IDF, cosine similarity)
-
-Transformers (HuggingFace)
-
-Fingerprint hashing (SHA-256)
-
-Cloud & Utilities
-
-AWS S3 (file storage)
-
-ReportLab (PDF generation)
-
-📁 Project Structure
+```
 EduShield/
 ├── backend/
-│   ├── main.py
-│   ├── models.py
-│   ├── schemas.py
-│   └── database.py
+│   ├── main.py           # API routes & app entry point
+│   ├── models.py         # SQLAlchemy database models
+│   ├── schemas.py        # Pydantic request/response schemas
+│   └── database.py       # DB connection & session config
 ├── frontend/
 │   ├── src/
-│   └── components/
-├── uploads/
+│   │   ├── pages/        # Route-level page components
+│   │   ├── components/   # Reusable UI components
+│   │   └── App.jsx       # Root component & routing
+│   └── public/
+├── uploads/              # Temporary file storage
 └── README.md
+```
 
-⚙️ How to Run the Project (Local)
-Backend
+---
+
+## ⚙️ Local Setup
+
+### Prerequisites
+- Python 3.9+
+- Node.js 18+
+- PostgreSQL
+- AWS S3 bucket (for file storage)
+
+### Backend
+
+```bash
 cd backend
 python -m venv venv
-venv\Scripts\activate
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # macOS/Linux
+
 pip install -r requirements.txt
 uvicorn main:app --reload
+```
 
-Frontend
+> API available at `http://localhost:8000`  
+> Interactive docs at `http://localhost:8000/docs`
+
+### Frontend
+
+```bash
 cd frontend
 npm install
 npm run dev
+```
 
-🔒 Repository Access
+> App available at `http://localhost:3000`
 
-This repository is private.
-Access is granted only to collaborators added by the owner.
+---
 
-📈 Future Enhancements
+## 🔒 Access & Licensing
 
-Online corpus integration
+This repository is **private**. Access is granted only to collaborators explicitly added by the owner.
 
-Improved semantic plagiarism detection
+---
 
-Admin dashboard & analytics
+## 📈 Roadmap
 
-Multi-language plagiarism detection
+- [ ] Online corpus integration for broader plagiarism coverage
+- [ ] Semantic plagiarism detection (beyond exact fingerprints)
+- [ ] Admin analytics dashboard
+- [ ] Multi-language document support
+- [ ] Cloud deployment (AWS / Azure)
+- [ ] Email notifications for deadlines and feedback
 
-Deployment on cloud (AWS / Azure)
+---
 
-👩‍💻 Author
+## 👩‍💻 Author
 
-Samiksha Patil
-BSc Information Technology
-Final Year Project – EduShield
+**Samiksha Patil**  
+BSc Information Technology — Final Year Project  
+🛡️ *EduShield — Integrity, Verified.*
