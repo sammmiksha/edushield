@@ -11,20 +11,20 @@
 
 *A full-stack academic integrity platform built as a BSc IT Final Year Project*
 
----
-
 </div>
+
+---
 
 ## 📖 Overview
 
-**EduShield** is a comprehensive academic integrity system that detects plagiarism and AI-generated content in student documents. It supports two distinct workflows — a **classroom-based Faculty–Student pipeline** for institutional use, and a **Personal Document Checker** for individual users — making it equally useful for educators and independent researchers.
+**EduShield** detects plagiarism and AI-generated content in student documents through two workflows: a **classroom-based Faculty–Student pipeline** for institutional use, and a **Personal Document Checker** for individual users — built to serve educators and independent researchers alike.
 
 ---
 
 ## ✨ Features at a Glance
 
 | Feature | Student | Faculty | Personal User |
-|---|---|---|---|
+|---|:---:|:---:|:---:|
 | Upload Documents | ✅ | ✅ | ✅ |
 | Plagiarism Detection | ✅ | ✅ | ✅ |
 | AI Content Detection | ✅ | ✅ | ✅ |
@@ -39,56 +39,49 @@
 
 ### 🔐 Authentication & Role Management
 - Secure **JWT-based authentication**
-- Three distinct roles: **Faculty**, **Student**, **Personal User**
+- Three roles: **Faculty**, **Student**, **Personal User**
 - Role-based UI and API access control
-
----
 
 ### 👩‍🏫 Faculty Module
 - Create **classroom sections** with unique access codes
 - Upload **reference assignments** per section
-- View and review all **student submissions**
+- Review all **student submissions**
 - Detect:
   - Student-to-reference plagiarism
   - Student-to-student cross-comparison
 - Add **remarks**, **grades**, and **resubmission requests**
 
----
-
 ### 👨‍🎓 Student Module
 - Join sections via **access code**
-- Upload assignments (.pdf / .docx)
+- Upload assignments (`.pdf` / `.docx`)
 - View **plagiarism percentage** and **AI detection results**
 - Track **submission attempts**, **deadlines**, and **faculty feedback**
 
----
-
 ### 📄 Personal Document Checker
-Upload any academic document and get a detailed integrity report:
-
-- **Domain-based analysis**: Computer Science · Science · Commerce · General
+Upload any academic document for a detailed integrity report:
+- **Domain-based analysis** — Computer Science · Science · Commerce · General
 - **Fingerprint-based plagiarism detection** against a public domain corpus
-- **AI content detection** using a transformer model
-- **Severity classification**: Low · Medium · High
+- **AI content detection** via transformer model
+- **Severity classification** — Low · Medium · High
 - **Highlighted matched phrases** in results
-- **Downloadable PDF report** — professional and shareable
+- **Downloadable PDF report**, ready to share
 
 ---
 
 ## 🧠 Detection Methodology
 
-### ✔ Fingerprint-Based Plagiarism Detection
+### Fingerprint-Based Plagiarism Detection
 
 ```
 Text Normalization → Word Shingling → SHA-256 Hashing → Corpus Comparison → Similarity Score
 ```
 
 1. Text is cleaned and broken into overlapping **word shingles**
-2. Each shingle is hashed using **SHA-256**
+2. Each shingle is hashed with **SHA-256**
 3. Hashes are compared against a **domain-specific public corpus**
 4. Similarity is derived from the **fingerprint overlap ratio**
 
-### 📊 Severity Thresholds
+**Severity thresholds:**
 
 | Similarity Score | Severity | Interpretation |
 |---|---|---|
@@ -96,49 +89,30 @@ Text Normalization → Word Shingling → SHA-256 Hashing → Corpus Comparison 
 | 16–40% | 🟡 Medium | Partial content resemblance |
 | > 40% | 🔴 High | Strong overlap — likely plagiarism |
 
----
+### AI Content Detection
+- **Model:** [`roberta-base-openai-detector`](https://huggingface.co/roberta-base-openai-detector) (HuggingFace Transformers)
+- **Output:** AI Generated / Human Written + confidence score
+- Integrated directly into results for both personal and classroom uploads
 
-### 🤖 AI Content Detection
-
-- Model: [`roberta-base-openai-detector`](https://huggingface.co/roberta-base-openai-detector) (HuggingFace Transformers)
-- Output: **AI Generated** / **Human Written** + Confidence Score
-- Integrated directly into the results table for both personal and classroom uploads
-
----
-
-### 📑 PDF Report Generation
-
+### PDF Report Generation
 Auto-generated reports include:
 - Document filename & upload timestamp
 - Plagiarism percentage + severity badge
 - AI detection result + confidence score
 - Highlighted matched phrases
-- Downloadable directly from the Results page
+- One-click download from the Results page
 
 ---
 
 ## 🧰 Tech Stack
 
-### Frontend
-- **React.js** — Component-based SPA
-- **Tailwind CSS** — Utility-first styling
-- **Fetch API** — REST communication
-- **Toast Notifications** — User feedback
+**Frontend** — React.js (SPA) · Tailwind CSS · Fetch API · Toast notifications
 
-### Backend
-- **FastAPI** — High-performance Python API
-- **SQLAlchemy** — ORM for database interaction
-- **PostgreSQL** — Relational data storage
-- **JWT** — Stateless authentication
+**Backend** — FastAPI · SQLAlchemy ORM · PostgreSQL · JWT authentication
 
-### AI / ML
-- **Scikit-learn** — TF-IDF & cosine similarity
-- **HuggingFace Transformers** — AI detection model
-- **SHA-256 Fingerprint Hashing** — Custom plagiarism engine
+**AI / ML** — Scikit-learn (TF-IDF & cosine similarity) · HuggingFace Transformers (AI detection) · SHA-256 fingerprint hashing (custom plagiarism engine)
 
-### Cloud & Utilities
-- **AWS S3** — Secure file storage
-- **ReportLab** — PDF generation
+**Cloud & Utilities** — AWS S3 (file storage) · ReportLab (PDF generation)
 
 ---
 
@@ -157,7 +131,7 @@ EduShield/
 │   │   ├── components/   # Reusable UI components
 │   │   └── App.jsx       # Root component & routing
 │   └── public/
-├── uploads/              # Temporary file storage
+├── uploads/               # Temporary file storage
 └── README.md
 ```
 
@@ -165,14 +139,9 @@ EduShield/
 
 ## ⚙️ Local Setup
 
-### Prerequisites
-- Python 3.9+
-- Node.js 18+
-- PostgreSQL
-- AWS S3 bucket (for file storage)
+**Prerequisites:** Python 3.9+ · Node.js 18+ · PostgreSQL · AWS S3 bucket (for file storage)
 
 ### Backend
-
 ```bash
 cd backend
 python -m venv venv
@@ -182,19 +151,15 @@ venv\Scripts\activate          # Windows
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
-
-> API available at `http://localhost:8000`  
-> Interactive docs at `http://localhost:8000/docs`
+> API: `http://localhost:8000` · Docs: `http://localhost:8000/docs`
 
 ### Frontend
-
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-
-> App available at `http://localhost:3000`
+> App: `http://localhost:3000`
 
 ---
 
@@ -215,8 +180,13 @@ This repository is **private**. Access is granted only to collaborators explicit
 
 ---
 
+<div align="center">
+
 ## 👩‍💻 Author
 
-**Samiksha Patil**  
-BSc Information Technology — Final Year Project  
+**Samiksha Patil**
+BSc Information Technology — Final Year Project
+
 🛡️ *EduShield — Integrity, Verified.*
+
+</div>
